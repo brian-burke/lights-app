@@ -2,12 +2,12 @@ import logo from './logo.svg';
 import {useState, useEffect, useRef} from "react";
 import './App.css';
 
-            //here is their lightShowController_onCycle from the repo.
-            //I am using javascripts setInterval to emmulate their oncycle events.
+//here is their lightShowController_onCycle from the repo.
+//I am using javascripts setInterval to emmulate their oncycle events.
 
-            //What I think we should do is pull out the for loop that goes through and sets
-            //the "state" for each light into its own function so we can do what I am doing here
-            //each function is passed a previous state and then returns the next state.
+//What I think we should do is pull out the for loop that goes through and sets
+//the "state" for each light into its own function so we can do what I am doing here
+//each function is passed a previous state and then returns the next state.
 
 // static void lightShowController_onCycle(struct os_event *ev)
 // {
@@ -43,21 +43,37 @@ import './App.css';
 function App() {
 
     // marquee and pulse are the same function with different initial states!!
+    //same with chase and double chase
+
+    //probably a mathier way to do inital states for all of these...
 
     //inital state for marquee
-    let initalState = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+    // let initalState = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
 
     //initial state for pulse
     // let initalState = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
+    //inital state for double chase
+    // let initalState = [1, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+
+    //inital state for single chase
+    // let initalState = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    //inital state for wave
+    let initalState = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     const [state, setState] = useState(initalState);
+
+    //need to keep track of direction for wave??
+    const [direction, setDirection] = useState(1);
 
     //creating an interval to update the state every half second
     useEffect(() => {
         const interval = setInterval(() => {
             let prevState = JSON.parse(JSON.stringify(state));
-            setState(pulse(prevState));
+
+            //call function here chase, pulse, rand etc
+            setState(wave(prevState));
         }, 500);
         return () => clearInterval(interval)
     }, [state]);
@@ -73,8 +89,8 @@ function App() {
         return newState
     }
 
-    //pulse currently only works if all lights start off...
-    //marquee will work something like this we just have to manage the inital state better
+
+    //very simple
     function pulse(prevState) {
         let newState = []
 
@@ -85,29 +101,56 @@ function App() {
         return newState
     }
 
-    //will have to modify chase chase logic to allow for double chase but you get the point
-    function chase(prevState){
+    //chase and double chase just shift everything to the right and index circularly
+
+    //thought this might be easier than circlularly indexing pointers but
+    // its also in c so idk
+    function chase(prevState) {
         let newState = []
 
-        let pointer = 0
         prevState.forEach((element, index) => {
-            if (element){
-                pointer = index
+            if (index === 0) {
+                newState[index] = prevState[prevState.length - 1]
+            } else {
+                newState[index] = prevState[index - 1]
             }
         })
-        if (pointer < 9){
-            pointer++
-        }
-        else{
-            pointer = 0
-        }
-        newState[pointer] = 1
-
-        console.log(pointer)
         return newState
     }
 
 
+    //weird bug here going backwards but I think this is the easiest way?
+    //its also 10pm and im on the plane with no internet and bored so I
+    //could be losing my mind
+    function wave(prevState) {
+        let newState = []
+
+        prevState.forEach((element, index) => {
+
+            if (direction) {
+                if (index === 0) {
+                    newState[index] = prevState[prevState.length - 1]
+                } else {
+                    newState[index] = prevState[index - 1]
+                }
+            } else {
+                //backwards
+                if (index === prevState.length){
+                    newState[index] = prevState[0]
+                }
+                newState[index - 1] = prevState[index]
+
+            }
+
+            //switching directions
+            if (index === prevState.length - 2 && element == 1) {
+                setDirection(0)
+            }
+        })
+
+        console.log(state)
+        return newState
+    }
 
     return (
         <div className="App">
